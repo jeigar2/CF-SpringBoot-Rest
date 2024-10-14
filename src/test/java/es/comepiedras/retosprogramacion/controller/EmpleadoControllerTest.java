@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
@@ -78,5 +80,25 @@ public class EmpleadoControllerTest {
         assertThat(nombre).isEqualTo("Marta");
         String puesto = documentContext.read("$.puesto");
         assertThat(puesto).isEqualTo("Hacedora");
+    }
+
+    @Test
+    @DirtiesContext
+    void shouldUpdateAnExistingEmpleado(){
+        Empleado empleado = new Empleado("José", "Carpintero");
+
+        HttpEntity<Empleado> request = new HttpEntity<>(empleado);
+        ResponseEntity<Void> response = restTemplate.exchange("/api/empleados/3", HttpMethod.PUT, request, Void.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<String> putResponse = restTemplate.getForEntity("/api/empleados/3", String.class);
+        assertThat(putResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        DocumentContext documentContext = JsonPath.parse(putResponse.getBody());
+        Number id = documentContext.read("$.id");
+        assertThat(id).isEqualTo(3);
+        String nombre = documentContext.read("$.nombre");
+        assertThat(nombre).isEqualTo("José");
+        String puesto = documentContext.read("$.puesto");
+        assertThat(puesto).isEqualTo("Carpintero");
     }
 }
