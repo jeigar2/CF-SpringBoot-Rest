@@ -2,6 +2,7 @@ package es.comepiedras.retosprogramacion.controller;
 
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import es.comepiedras.retosprogramacion.model.Empleado;
 import net.minidev.json.JSONArray;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,8 +10,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.annotation.DirtiesContext;
 
-import static org.assertj.core.api.Assertions.as;
+import java.net.URI;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -54,5 +57,26 @@ public class EmpleadoControllerTest {
     void shouldNotReturnAnEmpleadoWithAnUnknowId(){
         ResponseEntity<String> response = restTemplate.getForEntity("/api/empleados/1000", String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).isNull();
+    }
+
+    @Test
+    @DirtiesContext
+    void shouldCreateANewEmpleado(){
+        Empleado empleado = new Empleado("Marta", "Hacedora");
+        ResponseEntity<Void> response = restTemplate.getRestTemplate().postForEntity("/api/empleados", empleado, Void.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        URI location = response.getHeaders().getLocation();
+        ResponseEntity<String> getReponse = restTemplate.getForEntity(location, String.class);
+        assertThat(getReponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        DocumentContext documentContext = JsonPath.parse(getReponse.getBody());
+        Number id = documentContext.read("$.id");
+        assertThat(id).isNotNull();
+        String nombre = documentContext.read("$.nombre");
+        assertThat(nombre).isEqualTo("Marta");
+        String puesto = documentContext.read("$.puesto");
+        assertThat(puesto).isEqualTo("Hacedora");
     }
 }
