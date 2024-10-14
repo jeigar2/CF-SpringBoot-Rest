@@ -91,14 +91,30 @@ public class EmpleadoControllerTest {
         ResponseEntity<Void> response = restTemplate.exchange("/api/empleados/3", HttpMethod.PUT, request, Void.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        ResponseEntity<String> putResponse = restTemplate.getForEntity("/api/empleados/3", String.class);
-        assertThat(putResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        DocumentContext documentContext = JsonPath.parse(putResponse.getBody());
+        ResponseEntity<String> getResponse = restTemplate.getForEntity("/api/empleados/3", String.class);
+        assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        DocumentContext documentContext = JsonPath.parse(getResponse.getBody());
         Number id = documentContext.read("$.id");
         assertThat(id).isEqualTo(3);
         String nombre = documentContext.read("$.nombre");
         assertThat(nombre).isEqualTo("José");
         String puesto = documentContext.read("$.puesto");
         assertThat(puesto).isEqualTo("Carpintero");
+    }
+
+    @Test
+    @DirtiesContext
+    void shouldDeleteAnEmpleadoById(){
+//        restTemplate.delete("/api/empleados/3");
+        ResponseEntity<Void> response = restTemplate.exchange("/api/empleados/3", HttpMethod.DELETE, null, Void.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        ResponseEntity<String> getResponse = restTemplate.getForEntity("/api/empleados", String.class);
+        assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        DocumentContext documentContext = JsonPath.parse(getResponse.getBody());
+        int empleadosCount = documentContext.read("$.length()");
+        assertThat(empleadosCount).isEqualTo(2);
+
     }
 }
